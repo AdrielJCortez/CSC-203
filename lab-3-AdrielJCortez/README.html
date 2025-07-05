@@ -1,0 +1,127 @@
+<h1 id="lab-3-csccpe-203-interfaces">Lab 3, CSC/CPE 203 — Interfaces</h1>
+<p>Remember the greenhouse gas emissions data we played with in Lab 2? In this lab, we will create some simple but powerful visualisations of the data to help us understand it a bit better.</p>
+<h2 id="objectives">Objectives</h2>
+<ul>
+<li>To develop and demonstrate basic object-oriented development skills. Much of the structure of the solution is given—use good judgement when “filling in the blanks”.</li>
+<li>To become familiar with Java interfaces and the concept of polymorphism.</li>
+<li>To practice using the <code>instanceof</code> operator.</li>
+<li>More practice using existing classes and interfaces from the Java standard library, such as: <code>List</code>, <code>ArrayList</code> and <code>LinkedList</code>.</li>
+</ul>
+<h2 id="given-files">Given files</h2>
+<p>Obtain the starter code for this lab at the provided GitHub link: <strong>TODO</strong></p>
+<p>A number of files are provided to you to begin with. Take a moment to peruse these files:</p>
+<ul>
+<li><code>Main.java</code>: The entry point for this program. This class simply creates a <code>Plotter</code> (see next). No modifications are needed to this file.</li>
+<li><code>Plotter.java</code>: Plots greenhouse gas emissions data. Some modifications will be made to this file.</li>
+<li><code>EmissionsDatabase.java</code>: Loads emissions data from provided data files and makes it available for analysis. Small change will be needed to this file. Take some time to read through the methods (or method comments) in this file to understand the functionality it provides.</li>
+</ul>
+<p><strong>If you have any questions about these files, don’t hesitate to ask the instructor or your neighbour.</strong></p>
+<h2 id="setup">Setup</h2>
+<p>Run the program from the <code>main</code> method. You should see figure like the following (point colours may be different):</p>
+<figure>
+<img src="sectors-plot.png" alt="Screenshot of sector emissions data" /><figcaption aria-hidden="true">Screenshot of sector emissions data</figcaption>
+</figure>
+<p>The figure displays global emissions data for different industry sectors from 1970 to 2012. We can immediately notice some trends from the data. For example, the Power industry’s greenhouse gas emissions have risen quite dramatically over the last two decades.</p>
+<h2 id="tasks">Tasks</h2>
+<p>Take a look at <code>Plotter.java</code>. This file makes use of a library called <em><a href="https://processing.org">processing</a></em> to help create the graph. Take some time to read the method comments in this file, then focus your attention on the <code>plotSectorData</code> method.</p>
+<p>Note the following:</p>
+<ul>
+<li>The method takes in a <code>List&lt;Sector&gt;</code>. This list can be obtained from the <code>EmissionsDatabase</code>.</li>
+<li>The graph plotting code makes use of the minimum and maximum Sector emissions, also obtained from the <code>EmissionsDatabase</code>.</li>
+<li><em>Importantly, the method only lets us plot Sector data.</em></li>
+</ul>
+<p>Our task in this lab is to modify this method to allow it to work with both <code>Sector</code> data and <code>Country</code> data. We will accomplish this using the Object-oriented construct of an <em>interface</em>.</p>
+<blockquote>
+<p>Below, items marked with <strong><em>TODO</em></strong> are tasks that you must complete.</p>
+</blockquote>
+<h3 id="part-0">Part 0</h3>
+<p>First, let us consider how we would incorporate <code>Country</code> objects into this existing code. We’ll take the simplest possible route, and simply write another plotting method that works with <code>Country</code> data.</p>
+<p><strong><em>TODO</em></strong> In <code>Plotter.java</code>, make a copy of the <code>plotSectorData</code> method, and rename it to <code>plotCountryData</code>.</p>
+<p><strong><em>TODO</em></strong> Read through the code in the method and replace references to <em>sectors</em> with references to <em>countries</em>. For example:</p>
+<ul>
+<li>The method takes in a <code>List&lt;Sector&gt;</code> as its parameter. <strong>Change this to a <code>List&lt;Country&gt;</code></strong></li>
+<li>The for-each loop is looping through a list of <code>Sectors</code>. <strong>Change this to loop through the <code>List&lt;Country&gt;</code> that is the new method parameter.</strong></li>
+<li>The third line of the method—the one that calls <code>writeEmissionsAxis</code>—draws the y-axis for the graph. To do this, it referse to the minimum and maximum <code>Sector</code> emissions from the <code>EmissionsDatabase</code> methods <code>getSectorMinEmissions</code> and <code>getSectorMaxEmissions</code>, respectively. <strong>Change this to refer to the min and max <em><code>Country</code></em> emissions.</strong></li>
+<li>Finally, look for the line that calls <code>mapEmissions</code>—this line figures out where each data point will be drawn. It also refers to the <code>Sector</code>-specific min and max values. <strong>Change this to instead refer to the <code>Country</code> min and max values.</strong></li>
+</ul>
+<p><strong><em>TODO</em></strong> In the <code>draw</code> method, call your new <code>plotCountryData</code> method, making sure to give it a list of countries. That is, change</p>
+<p><code>this.plotSectorData(this.db.getSectors());</code></p>
+<p>to</p>
+<p><code>this.plotCountryData(this.db.getCountries());</code></p>
+<blockquote>
+<p><span style="color: darkorange;"><strong>Run the program.</strong></span> You should now see a plot of greenhouse gas emissions by Country, similar to the one below (colours may vary). <em>Only move on if you see this plot.</em></p>
+</blockquote>
+<figure>
+<img src="country-plot.png" alt="Screenshot of Country emissions data" /><figcaption aria-hidden="true">Screenshot of Country emissions data</figcaption>
+</figure>
+<hr />
+<p>Do you see a problem with what we’ve done? We’ve deviated from an important principle in software development—the DRY principle. It stands for <em>don’t repeat yourself</em>. We are currently repeating ourselves a whole lot by having two nearly identical methods, one for plotting Sector data and one for plotting Country data.</p>
+<blockquote>
+<p><span style="color: darkorange"><strong>Why is this a problem?</strong></span> Suppose we wanted to change the plot so that it displayed squares instead of circles. Or suppose we wanted to do something more complex like display the exact emission amount when we hover over a given data point. We would need to implement each piece of functionality twice—once for Sectors and once for Countries. And if we wanted to support other kinds of Greenhouse Gas emitters, like US states or individual companies? That’s THREE times we need to make all future changes. The probability of introducing bugs <em>skyrockets</em> under these conditions.</p>
+</blockquote>
+<p>We can avoid this by making use of Object-oriented design principles. Specifically, we will use an <em>interface</em>.</p>
+<h3 id="part-1">Part 1</h3>
+<p><strong><em>TODO</em></strong> Create a new interface called <code>GreenhouseGasEmitter</code>.</p>
+<p>The interface should have the following abstract methods:</p>
+<ul>
+<li><code>String getName()</code></li>
+<li><code>double getTotalEmissionsInYear(int year)</code></li>
+</ul>
+<p><strong><em>TODO</em></strong> Make <code>Country.java</code> and <code>Sector.java</code> <code>implement</code> the interface you just created.</p>
+<p>This means that <code>Country.java</code> and <code>Sector.java</code> ought to have the following methods:</p>
+<ul>
+<li><code>public String getName()</code>: Return the name of the <code>Country</code> or <code>Sector</code></li>
+<li><code>public double getTotalEmissionsInYear(int year)</code>: For the <code>Sector</code>, simply return the value in its map of emissions corresponding to the given year. For the <code>Country</code>, recall that the emissions are stored as <code>Emission</code> objects, keeping track of CO2, CH4 and N20 emissions. Return the <em>total</em> emissions for the given year, i.e., CO2 + CH4 + N20.</li>
+</ul>
+<blockquote>
+<p><span style="color: darkorange;"><strong>Important</strong>:</span> Make sure the code is still working correctly by plotting both Sector and Country data. That is, make the <code>draw</code> method call <code>plotCountryData</code> once, and make it call <code>plotSectorData</code> once. Only move on once you have confirmed that you can see both plots.</p>
+</blockquote>
+<h3 id="part-2">Part 2</h3>
+<p>We now have the <code>GreenhouseGasEmitter</code> interface. Let’s update our <code>plotSectorData</code> method to use it.</p>
+<p>This part is a bit more work than the rest. But we’ll approach it step-by-step! In high-level terms, we want to <em>refactor</em> the method so that it is not working specifically on <code>Sectors</code>, but rather can work on any <code>GreenhouseGasEmitters</code>. Read the code in the method and see if you can identify spots where we need to become a bit more general and less “sector-y”.</p>
+<p>I see the following:</p>
+<ul>
+<li>The method name, <code>plotSectorData</code> definitely needs to change.</li>
+<li>The method takes in a <code>List&lt;Sector&gt;</code> as its parameter.</li>
+<li>The for-each loop is looping through this list of <code>Sectors</code>.</li>
+<li>The line that calls <code>writeEmissionsAxis</code>. To do this, it refers to minimum and maximum <code>Sector</code> emissions obtained from the <code>EmissionsDatabase</code> methods <code>getSectorMinEmissions</code> and <code>getSectorMaxEmissions</code>, respectively.</li>
+<li>The line that calls <code>mapEmissions</code> figures out the y-coordinate where each data point will be drawn—this line also refers to <code>Sector</code>-specific min and max values.</li>
+</ul>
+<p>Notice that this list of required changes looks a lot like the list of items we updated in <code>plotCountryData</code>. Where previously we were changing from Sector to Country, we are now changing from Sector to any GreenhouseGasEmitter.</p>
+<p>Below, we will understand and tackle these changes one-by-one. <em>Read the following carefully.</em></p>
+<p><strong><em>TODO</em></strong> The first step is to rename the method. Let’s call it <code>plotEmissionsData</code>. Call this method in the <code>draw</code> method. Run the program to see that the Sector plot still appears.</p>
+<p>We could change the <code>List&lt;Sector&gt;</code> to work with <code>GreenhouseGasEmitter</code> right now, but the other changes are more local to <code>Plotter.java</code>. We can make our lives easier by tackling them first.</p>
+<p>So we move on to the line with that calls <code>writeEmissionsAxis</code>. Currently, the line reads:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">writeEmissionsAxis</span>(<span class="kw">this</span>.<span class="fu">db</span>.<span class="fu">getSectorMinEmission</span>(), <span class="kw">this</span>.<span class="fu">db</span>.<span class="fu">getSectorMaxEmission</span>());</span></code></pre></div>
+<p>The method <code>writeEmissionsAxis</code> needs the min and max value for the y-axis, and we are currently passing it the min and max values for <code>Sectors</code> specifically. But we want the <code>plotEmissionsData</code> method to work with any <code>GreenhouseGasEmitters</code>, and that means not “hard-coding” <code>Country</code> or <code>Sector</code>-specific data. Let’s “lift” this min/max business up.</p>
+<p>We’ll give the <code>draw</code> method control over this, since that is where the decision to plot Sectors or Countries is actually being made.</p>
+<p><strong><em>TODO</em></strong> Modify the <code>plotEmissionsData</code> method signature so that it takes two additional parameters, like so:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotEmissionsData</span>(<span class="bu">List</span>&lt;Sector&gt; sectors, <span class="dt">double</span> min, <span class="dt">double</span> max)</span></code></pre></div>
+<p><strong><em>TODO</em></strong> Change the call to <code>writeEmissionsAxis</code> to use these provided <code>min</code> and <code>max</code> values.</p>
+<p><strong><em>TODO</em></strong> Do the same for the call to <code>mapEmissions</code>.</p>
+<p><strong><em>TODO</em></strong> Finally, since you have changed the <code>plotEmissionsData</code> method definition, you also need to change its usage. So in the <code>draw</code> method, where <code>plotEmissionsData</code> is called without specific min and max values, change it to use the Sector min and max values:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">this</span>.<span class="fu">plotEmissionsData</span>(<span class="kw">this</span>.<span class="fu">db</span>.<span class="fu">getSectors</span>(), <span class="kw">this</span>.<span class="fu">db</span>.<span class="fu">getSectorMinEmissions</span>(), <span class="kw">this</span>.<span class="fu">db</span>.<span class="fu">getSectorMaxEmissions</span>())</span></code></pre></div>
+<blockquote>
+<p><span style="color: darkorange;"><strong>Think:</strong></span> Why is it okay to be “sector-specific” here? Because here, we are a <em>consumer</em> of the <code>plotEmissionsData</code> method—we are making the decision to plot sector data, but we are not <em>forced</em> to do so. Well, we are, but we’ll soon change that!</p>
+</blockquote>
+<p>Run the program and confirm that you’re still seeing the sector data graph.</p>
+<p>Our goal now is to complete this change to be able to plot <code>Country</code> data if we so choose.</p>
+<p>Remember the <code>GreenhouseGasEmitter</code> interface? Let’s use it.</p>
+<p><strong><em>TODO</em></strong> Change the <code>plotEmissionsData</code> method signature to accept a <code>List&lt;GreenhouseGasEmitter&gt;</code> instead of a <code>List&lt;Sector&gt;</code>. For the sake of consistency, also rename the parameter variable from <code>sectors</code> to <code>emitters</code>.</p>
+<p>Uh-oh, we now have syntax errors!</p>
+<p><strong><em>TODO</em></strong> Remember the for-each loop? Modify it to work on the <code>emitters</code> object.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> (GreenhouseGasEmitter emitter : emitters) <span class="co">// for each GreenhouseGasEmitter in emitters...</span></span></code></pre></div>
+<p>Notice that there is now a syntax error in the <code>draw</code> method where you call <code>plotEmissionsData</code>. If you hover your mouse over it, it will tell you that the <code>plotEmissionsData</code> method expects <code>List&lt;GreenhouseGasEmitter&gt;</code>, but you are giving it a <code>List&lt;Sector&gt;</code>.</p>
+<p>Therefore, we will change the program so that when we call <code>plotEmissionsData</code> we give it an object of type <code>List&lt;GreenhouseGasEmitter&gt;</code>. To make this change, we will venture into <code>EmissionsDatabase.java</code>, which is where the <code>List&lt;Sector&gt;</code> comes from. Open that file.</p>
+<p>Note that the instance variable <code>sectors</code> in this class is of type <code>List&lt;Sector&gt;</code>. Related to this, the getter method <code>getSectors</code> returns a <code>List&lt;Sector&gt;</code>.</p>
+<p><strong><em>TODO</em></strong> Change both the variable type and the getter method’s return type to <code>List&lt;GreenhouseGasEmitter&gt;</code>.</p>
+<p><strong><em>TODO</em></strong> Since the goal is to easily plot <code>Sector</code> or <code>Country</code> data, do the same for the <code>countries</code> instance variable and <code>getCountries</code> getter method. (After all, <code>Country implements GreenhouseGasEmitter</code> as well.)</p>
+<p>Upon returning to <code>Plotter.java</code>, see that the syntax errors have disappeared. Run the program again, ensuring that the graph showing Sector data appears.</p>
+<blockquote>
+<p><strong>So what have we achieved?</strong> We have now made many changes to our program, but it is functionally identical to what we had before. However, we’ve improved the quality of our code—it is now easier to modify to accommodate changing requirements. This is a core tenet of <em>agile software development</em>. In this case, the changed requirement is that we should be able to plot either <code>Sector</code> data or <code>Country</code> data, as we choose.</p>
+</blockquote>
+<p><strong><em>TODO</em></strong> Modify the arguments passed to <code>plotEmissionsData</code> so that it plots <code>Country</code> data instead of <code>Sector</code> data.</p>
+<p>When you’re finished, you should see the <code>Country</code> that you saw in Part 0 again.</p>
+<p>You can delete the <code>plotCountryData</code> method, since we don’t need it anymore. We can easily plot <code>Sector</code> or <code>Country</code> data using only the <code>plotEmissionsData</code> method. Neat!</p>
+<h2 id="submission">Submission</h2>
+<p>Submit your files by the deadline, and demo your changes to the instructor in lab on the due date.</p>
